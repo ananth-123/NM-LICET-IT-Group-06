@@ -41,23 +41,41 @@ import { Separator } from "./components/Seperator";
 const Todo = () => {
   const [todos, setTodos] = useState([]);
   const [todoInput, setTodoInput] = useState("");
-  const [deadline, setDeadline] = useState("");
+  const [date, setDate] = React.useState();
   const [priority, setPriority] = useState("Normal");
 
-  const addTodo = () => {
+  const addTodo = useCallback(() => {
     if (todoInput.trim() !== "") {
       setTodos((prev) => {
-        return [
-          ...prev,
-          { text: todoInput, done: false, deadline: date, priority },
-        ];
+        const newTodo = {
+          text: todoInput,
+          done: false,
+          deadline: date,
+          priority,
+        };
+        const updatedTodos = [...prev, newTodo];
+
+        // Sort todos based on done status first, then overdue, and finally priority
+        updatedTodos.sort((a, b) => {
+          if (
+            a.done === b.done &&
+            isOverdue(a.deadline) === isOverdue(b.deadline)
+          ) {
+            const priorityOrder = { Low: 2, Normal: 1, High: 0 };
+            return priorityOrder[a.priority] - priorityOrder[b.priority];
+          }
+
+          // Sort by overdue status first (overdue items come first)
+          return isOverdue(a.deadline) ? -1 : 1;
+        });
+
+        return updatedTodos;
       });
       setTodoInput("");
-      setDeadline("");
       setDate("");
       setPriority(""); // Reset priority
     }
-  };
+  }, [date, priority, todoInput]); // Add empty array as the second argument to useCallback
 
   const removeTodo = (index) => {
     setTodos((prev) => {
@@ -69,6 +87,7 @@ const Todo = () => {
   const toggleDone = useCallback((index) => {
     setTodos((prev) => {
       prev[index].done = !prev[index].done;
+
       return [...prev];
     });
   }, []);
@@ -87,15 +106,22 @@ const Todo = () => {
 
   useEffect(() => {
     setTodos((prev) => {
-      prev
-        .sort((a, b) => (a.done === b.done ? 0 : a.done ? 1 : -1))
-        .sort((a, b) => {
+      // Sorting moved into the setTodos callback
+      prev.sort((a, b) => {
+        if (
+          a.done === b.done &&
+          isOverdue(a.deadline) === isOverdue(b.deadline)
+        ) {
           const priorityOrder = { Low: 2, Normal: 1, High: 0 };
           return priorityOrder[a.priority] - priorityOrder[b.priority];
-        });
+        }
+
+        // Sort by overdue status first (overdue items come first)
+        return isOverdue(a.deadline) ? -1 : 1;
+      });
+
       return prev;
     });
-    console.log("wagwan wahts up");
   }, [addTodo, toggleDone]);
 
   const getTimeRemaining = (deadline) => {
@@ -116,8 +142,6 @@ const Todo = () => {
       return `${daysRemaining} days left`;
     }
   };
-
-  const [date, setDate] = React.useState();
 
   return (
     <>
@@ -264,12 +288,9 @@ const Todo = () => {
                         {todo.priority}
                       </TableCell>
                       <TableCell className={`${todo.done && "line-through"}`}>
-                        {todo.deadline
-                          .toJSON()
-                          .slice(0, 10)
-                          .split("-")
-                          .reverse()
-                          .join("/")}
+                        {todo?.deadline
+                          ? format(new Date(todo.deadline), "dd/MM/yyyy")
+                          : ""}
                         <div className="text-sm text-gray-500">
                           {getTimeRemaining(todo.deadline)}
                         </div>
