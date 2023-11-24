@@ -15,6 +15,7 @@ import {
   SelectLabel,
   SelectItem,
 } from "./components/Select";
+import { Toaster, toast } from "sonner";
 import { cn } from "./lib/utils";
 import { Calendar } from "./components/Calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "./components/Popover";
@@ -35,6 +36,7 @@ import {
   TableHead,
   TableRow,
   TableCell,
+  TableCaption,
 } from "./components/Table";
 import { Separator } from "./components/Seperator";
 
@@ -43,6 +45,7 @@ const Todo = () => {
   const [todoInput, setTodoInput] = useState("");
   const [date, setDate] = React.useState();
   const [priority, setPriority] = useState("Normal");
+  const remainingTasksCount = todos.filter((todo) => !todo.done).length;
 
   const addTodo = useCallback(() => {
     if (todoInput.trim() !== "") {
@@ -145,14 +148,15 @@ const Todo = () => {
 
   return (
     <>
-      <div className="z-10 min-h-screen bg-white">
-        <nav className="z-20 p-4">
+      <div className=" min-h-screen bg-white">
+        <nav className=" p-4">
           <div className="container mx-auto">
             <h1 className="text-2xl font-bold">Todo List</h1>
           </div>
         </nav>
         <Separator className="" />
         <div className="container mx-auto p-6">
+          <Toaster />
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline">
@@ -239,6 +243,7 @@ const Todo = () => {
                     className=""
                     onClick={() => {
                       handleSubmit();
+                      toast.success("Task successfully created!");
                     }}
                   >
                     Create Task
@@ -250,6 +255,9 @@ const Todo = () => {
           {todos.length > 0 && (
             <div className="mb-6">
               <Table className="">
+                <TableCaption>{`${remainingTasksCount} ${
+                  remainingTasksCount === 1 ? "task" : "tasks"
+                } remaining.`}</TableCaption>
                 <TableHeader>
                   <TableRow className="">
                     <TableHead className="w-[5%]">Done</TableHead>
@@ -298,7 +306,10 @@ const Todo = () => {
                       <TableCell>{todo.done ? "Done" : "Pending"}</TableCell>
                       <TableCell className="float-right">
                         <Button
-                          onClick={() => removeTodo(index)}
+                          onClick={() => {
+                            removeTodo(index);
+                            toast.success("Task removed successfully!");
+                          }}
                           variant="ghost"
                           className="ml-2"
                         >
