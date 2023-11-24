@@ -9,8 +9,10 @@ import {
   ArrowUpCircle,
   CheckCircle2,
   Circle,
-  HelpCircle,
-  XCircle,
+  Clock9,
+  AlertCircle,
+  Check,
+  Filter,
 } from "lucide-react";
 import {
   Command,
@@ -65,6 +67,7 @@ const Todo = () => {
   const remainingTasksCount = todos.filter((todo) => !todo.done).length;
   const [open, setOpen] = React.useState(false);
   const [selectedStatus, setSelectedStatus] = React.useState(null);
+  const [selectedPriority, setSelectedPriority] = useState(null);
 
   const addTodo = useCallback(() => {
     if (todoInput.trim() !== "") {
@@ -121,11 +124,26 @@ const Todo = () => {
   const filteredTasks = selectedStatus
     ? todos.filter((todo) => {
         if (selectedStatus.value === "todo") {
-          return !todo.done; // Todo status (Pending)
+          return true;
         } else if (selectedStatus.value === "in progress") {
-          return !todo.done && !isOverdue(todo.deadline); // In Progress status
+          return !todo.done && !isOverdue(todo.deadline);
         } else if (selectedStatus.value === "done") {
-          return todo.done; // Done status
+          return todo.done;
+        } else if (
+          selectedStatus.value === "low priority" &&
+          todo.priority === "Low"
+        ) {
+          return true;
+        } else if (
+          selectedStatus.value === "normal priority" &&
+          todo.priority === "Normal"
+        ) {
+          return true;
+        } else if (
+          selectedStatus.value === "high priority" &&
+          todo.priority === "High"
+        ) {
+          return true;
         }
         return false;
       })
@@ -136,12 +154,11 @@ const Todo = () => {
   };
 
   const handlePriorityChange = (selectedPriority) => {
-    setPriority(selectedPriority);
+    setSelectedPriority(selectedPriority);
   };
 
   useEffect(() => {
     setTodos((prev) => {
-      // Sorting moved into the setTodos callback
       prev.sort((a, b) => {
         if (
           a.done === b.done &&
@@ -151,7 +168,6 @@ const Todo = () => {
           return priorityOrder[a.priority] - priorityOrder[b.priority];
         }
 
-        // Sort by overdue status first (overdue items come first)
         return isOverdue(a.deadline) ? -1 : 1;
       });
 
@@ -174,6 +190,21 @@ const Todo = () => {
       value: "done",
       label: "Done",
       icon: CheckCircle2,
+    },
+    {
+      value: "low priority",
+      label: "Low Priority",
+      icon: Check,
+    },
+    {
+      value: "normal priority",
+      label: "Normal Priority",
+      icon: Clock9,
+    },
+    {
+      value: "high priority",
+      label: "High Priority",
+      icon: AlertCircle,
     },
   ];
 
@@ -304,24 +335,23 @@ const Todo = () => {
           </Dialog>
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-[150px] justify-start"
-              >
+              <Button variant="outline" className="ml-2 justify-start">
                 {selectedStatus ? (
                   <>
                     <selectedStatus.icon className="mr-2 h-4 w-4 shrink-0" />
                     {selectedStatus.label}
                   </>
                 ) : (
-                  <>+ Set status</>
+                  <>
+                    <Filter size={"16"} className="mr-1" />
+                    Filter
+                  </>
                 )}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="p-0" side="right" align="start">
               <Command>
-                <CommandInput placeholder="Change status..." />
+                <CommandInput placeholder="Select Filter" />
                 <CommandList>
                   <CommandEmpty>No results found.</CommandEmpty>
                   <CommandGroup>
@@ -350,6 +380,11 @@ const Todo = () => {
               </Command>
             </PopoverContent>
           </Popover>
+          {filteredTasks.length === 0 && (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-xl text-gray-500">No tasks</p>
+            </div>
+          )}
           {filteredTasks.length > 0 && (
             <div className="mb-6">
               <Table className="">
@@ -368,54 +403,69 @@ const Todo = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredTasks.map((todo, index) => (
-                    <TableRow
-                      key={index}
-                      className={`${index % 2 === 0 ? "bg-gray-100" : ""} ${
-                        isOverdue(todo.deadline) ? "text-red-500 font-bold" : ""
-                      } `}
-                    >
-                      <TableCell className="mx-auto">
-                        <Checkbox
-                          id={`task-${index}`}
-                          checked={todo.done}
-                          onCheckedChange={() => {
-                            toggleDone(index);
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell className={`${todo.done && "line-through"}`}>
-                        {index + 1}
-                      </TableCell>
-                      <TableCell className={`${todo.done && "line-through"}`}>
-                        {todo.text}
-                      </TableCell>
-                      <TableCell className={`${todo.done && "line-through"}`}>
-                        {todo.priority}
-                      </TableCell>
-                      <TableCell className={`${todo.done && "line-through"}`}>
-                        {todo?.deadline
-                          ? format(new Date(todo.deadline), "dd/MM/yyyy")
-                          : ""}
-                        <div className="text-sm text-gray-500">
-                          {getTimeRemaining(todo.deadline)}
-                        </div>
-                      </TableCell>
-                      <TableCell>{todo.done ? "Done" : "Pending"}</TableCell>
-                      <TableCell className="float-right">
-                        <Button
-                          onClick={() => {
-                            removeTodo(index);
-                            toast.success("Task removed successfully!");
-                          }}
-                          variant="ghost"
-                          className="ml-2"
-                        >
-                          <X />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {filteredTasks
+                    .filter((todo) => {
+                      if (selectedStatus && selectedStatus.value === "todo") {
+                        // Filter based on priority for Todo status
+                        if (
+                          selectedPriority &&
+                          todo.priority !== selectedPriority
+                        ) {
+                          return false;
+                        }
+                      }
+                      return true;
+                    })
+                    .map((todo, index) => (
+                      <TableRow
+                        key={index}
+                        className={`${index % 2 === 0 ? "bg-gray-100" : ""} ${
+                          isOverdue(todo.deadline)
+                            ? "text-red-500 font-bold"
+                            : ""
+                        } `}
+                      >
+                        <TableCell className="mx-auto">
+                          <Checkbox
+                            id={`task-${index}`}
+                            checked={todo.done}
+                            onCheckedChange={() => {
+                              toggleDone(index);
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell className={`${todo.done && "line-through"}`}>
+                          {index + 1}
+                        </TableCell>
+                        <TableCell className={`${todo.done && "line-through"}`}>
+                          {todo.text}
+                        </TableCell>
+                        <TableCell className={`${todo.done && "line-through"}`}>
+                          {todo.priority}
+                        </TableCell>
+                        <TableCell className={`${todo.done && "line-through"}`}>
+                          {todo?.deadline
+                            ? format(new Date(todo.deadline), "dd/MM/yyyy")
+                            : ""}
+                          <div className="text-sm text-gray-500">
+                            {getTimeRemaining(todo.deadline)}
+                          </div>
+                        </TableCell>
+                        <TableCell>{todo.done ? "Done" : "Pending"}</TableCell>
+                        <TableCell className="float-right">
+                          <Button
+                            onClick={() => {
+                              removeTodo(index);
+                              toast.success("Task removed successfully!");
+                            }}
+                            variant="ghost"
+                            className="ml-2"
+                          >
+                            <X />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                 </TableBody>
               </Table>
             </div>
