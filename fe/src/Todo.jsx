@@ -2,7 +2,24 @@ import { useState } from "react";
 import * as React from "react";
 import { Button } from "./components/Button";
 import { Input } from "./components/Input";
-import { X, Calendar as CalendarIcon, Plus } from "lucide-react";
+import {
+  X,
+  Calendar as CalendarIcon,
+  Plus,
+  ArrowUpCircle,
+  CheckCircle2,
+  Circle,
+  HelpCircle,
+  XCircle,
+} from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "./components/Command";
 import { Checkbox } from "./components/Checkbox";
 import { format } from "date-fns";
 import { useEffect, useCallback } from "react";
@@ -46,6 +63,8 @@ const Todo = () => {
   const [date, setDate] = React.useState();
   const [priority, setPriority] = useState("Normal");
   const remainingTasksCount = todos.filter((todo) => !todo.done).length;
+  const [open, setOpen] = React.useState(false);
+  const [selectedStatus, setSelectedStatus] = React.useState(null);
 
   const addTodo = useCallback(() => {
     if (todoInput.trim() !== "") {
@@ -134,6 +153,34 @@ const Todo = () => {
     const deadlineDate = new Date(deadline);
     const timeDifference = deadlineDate - now;
     const daysRemaining = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+
+    const statuses = [
+      {
+        value: "backlog",
+        label: "Backlog",
+        icon: HelpCircle,
+      },
+      {
+        value: "todo",
+        label: "Todo",
+        icon: Circle,
+      },
+      {
+        value: "in progress",
+        label: "In Progress",
+        icon: ArrowUpCircle,
+      },
+      {
+        value: "done",
+        label: "Done",
+        icon: CheckCircle2,
+      },
+      {
+        value: "canceled",
+        label: "Canceled",
+        icon: XCircle,
+      },
+    ];
 
     if (daysRemaining === 0) {
       return "Today";
@@ -252,6 +299,58 @@ const Todo = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-[150px] justify-start"
+              >
+                {selectedStatus ? (
+                  <>
+                    <selectedStatus.icon className="mr-2 h-4 w-4 shrink-0" />
+                    {selectedStatus.label}
+                  </>
+                ) : (
+                  <>+ Set status</>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="p-0" side="right" align="start">
+              <Command>
+                <CommandInput placeholder="Change status..." />
+                <CommandList>
+                  <CommandEmpty>No results found.</CommandEmpty>
+                  <CommandGroup>
+                    {statuses.map((status) => (
+                      <CommandItem
+                        key={status.value}
+                        value={status.value}
+                        onSelect={(value) => {
+                          setSelectedStatus(
+                            statuses.find(
+                              (priority) => priority.value === value
+                            ) || null
+                          );
+                          setOpen(false);
+                        }}
+                      >
+                        <status.icon
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            status.value === selectedStatus?.value
+                              ? "opacity-100"
+                              : "opacity-40"
+                          )}
+                        />
+                        <span>{status.label}</span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
           {todos.length > 0 && (
             <div className="mb-6">
               <Table className="">
