@@ -118,6 +118,19 @@ const Todo = () => {
     return deadline && new Date(deadline) < new Date();
   };
 
+  const filteredTasks = selectedStatus
+    ? todos.filter((todo) => {
+        if (selectedStatus.value === "todo") {
+          return !todo.done; // Todo status (Pending)
+        } else if (selectedStatus.value === "in progress") {
+          return !todo.done && !isOverdue(todo.deadline); // In Progress status
+        } else if (selectedStatus.value === "done") {
+          return todo.done; // Done status
+        }
+        return false;
+      })
+    : todos;
+
   const handleSubmit = () => {
     addTodo();
   };
@@ -146,6 +159,24 @@ const Todo = () => {
     });
   }, [addTodo, toggleDone]);
 
+  const statuses = [
+    {
+      value: "todo",
+      label: "Todo",
+      icon: Circle,
+    },
+    {
+      value: "in progress",
+      label: "In Progress",
+      icon: ArrowUpCircle,
+    },
+    {
+      value: "done",
+      label: "Done",
+      icon: CheckCircle2,
+    },
+  ];
+
   const getTimeRemaining = (deadline) => {
     if (!deadline) return "";
 
@@ -153,34 +184,6 @@ const Todo = () => {
     const deadlineDate = new Date(deadline);
     const timeDifference = deadlineDate - now;
     const daysRemaining = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
-
-    const statuses = [
-      {
-        value: "backlog",
-        label: "Backlog",
-        icon: HelpCircle,
-      },
-      {
-        value: "todo",
-        label: "Todo",
-        icon: Circle,
-      },
-      {
-        value: "in progress",
-        label: "In Progress",
-        icon: ArrowUpCircle,
-      },
-      {
-        value: "done",
-        label: "Done",
-        icon: CheckCircle2,
-      },
-      {
-        value: "canceled",
-        label: "Canceled",
-        icon: XCircle,
-      },
-    ];
 
     if (daysRemaining === 0) {
       return "Today";
@@ -326,12 +329,8 @@ const Todo = () => {
                       <CommandItem
                         key={status.value}
                         value={status.value}
-                        onSelect={(value) => {
-                          setSelectedStatus(
-                            statuses.find(
-                              (priority) => priority.value === value
-                            ) || null
-                          );
+                        onSelect={() => {
+                          setSelectedStatus(status);
                           setOpen(false);
                         }}
                       >
@@ -351,7 +350,7 @@ const Todo = () => {
               </Command>
             </PopoverContent>
           </Popover>
-          {todos.length > 0 && (
+          {filteredTasks.length > 0 && (
             <div className="mb-6">
               <Table className="">
                 <TableCaption>{`${remainingTasksCount} ${
@@ -369,7 +368,7 @@ const Todo = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {todos.map((todo, index) => (
+                  {filteredTasks.map((todo, index) => (
                     <TableRow
                       key={index}
                       className={`${index % 2 === 0 ? "bg-gray-100" : ""} ${
