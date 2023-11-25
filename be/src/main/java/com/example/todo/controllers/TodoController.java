@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -30,7 +32,12 @@ public class TodoController {
 
     @PostMapping("/todos")
     public Todo createTodo(@Valid @RequestBody Todo todo) {
-        todo.setCompleted(false);
+        // todo.setId("sdfsd");
+        // todo.setTitle("noice");
+        // todo.setCreatedAt(new Date());
+        // todo.setPriority("High");
+        // todo.setDeadline(new Date());
+        // todo.setCompleted(false);
         return todoRepository.save(todo);
     }
 
