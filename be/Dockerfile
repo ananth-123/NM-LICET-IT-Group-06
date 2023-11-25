@@ -6,7 +6,7 @@ COPY . .
 
 RUN mkdir -p ./src/main/resources
 
-RUN cp /etc/secrets/application.properties ./src/main/resources/application.properties
+RUN cp /application.properties ./src/main/resources/application.properties
 
 RUN chmod +x mvnw && ./mvnw clean install
 
