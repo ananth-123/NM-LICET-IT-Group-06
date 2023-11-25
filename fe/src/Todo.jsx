@@ -90,7 +90,6 @@ const Todo = () => {
             return priorityOrder[a.priority] - priorityOrder[b.priority];
           }
 
-          // Sort by overdue status first (overdue items come first)
           return isOverdue(a.deadline) ? -1 : 1;
         });
 
@@ -98,7 +97,7 @@ const Todo = () => {
       });
       setTodoInput("");
       setDate("");
-      setPriority(""); // Reset priority
+      setPriority("");
     }
   }, [date, priority, todoInput]); // Add empty array as the second argument to useCallback
 
