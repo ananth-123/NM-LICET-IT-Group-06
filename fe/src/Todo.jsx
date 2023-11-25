@@ -14,6 +14,7 @@ import {
   Check,
   Filter,
 } from "lucide-react";
+import { getAllTodos, addTodo, deleteTodo } from "./lib/utils";
 import {
   Command,
   CommandEmpty,
@@ -64,54 +65,16 @@ const Todo = () => {
   const [todoInput, setTodoInput] = useState("");
   const [date, setDate] = React.useState();
   const [priority, setPriority] = useState("Normal");
-  const remainingTasksCount = todos.filter((todo) => !todo.done).length;
+  const remainingTasksCount = todos.filter((todo) => !todo.completed).length;
   const [open, setOpen] = React.useState(false);
   const [selectedStatus, setSelectedStatus] = React.useState(null);
   const [selectedPriority, setSelectedPriority] = useState(null);
 
-  const addTodo = useCallback(() => {
-    if (todoInput.trim() !== "") {
-      setTodos((prev) => {
-        const newTodo = {
-          text: todoInput,
-          done: false,
-          deadline: date,
-          priority,
-        };
-        const updatedTodos = [...prev, newTodo];
-
-        // Sort todos based on done status first, then overdue, and finally priority
-        updatedTodos.sort((a, b) => {
-          if (
-            a.done === b.done &&
-            isOverdue(a.deadline) === isOverdue(b.deadline)
-          ) {
-            const priorityOrder = { Low: 2, Normal: 1, High: 0 };
-            return priorityOrder[a.priority] - priorityOrder[b.priority];
-          }
-
-          return isOverdue(a.deadline) ? -1 : 1;
-        });
-
-        return updatedTodos;
-      });
-      setTodoInput("");
-      setDate("");
-      setPriority("");
-    }
-  }, [date, priority, todoInput]); // Add empty array as the second argument to useCallback
-
-  const removeTodo = (index) => {
+  const toggleDone = useCallback((id) => {
     setTodos((prev) => {
-      prev.splice(index, 1);
-      return [...prev];
-    });
-  };
-
-  const toggleDone = useCallback((index) => {
-    setTodos((prev) => {
-      prev[index].done = !prev[index].done;
-
+      const index = prev.findIndex((todo) => todo.id === id);
+      const updatedTodos = [...prev];
+      updatedTodos[index].completed = !updatedTodos[index].completed;
       return [...prev];
     });
   }, []);
@@ -125,9 +88,9 @@ const Todo = () => {
         if (selectedStatus.value === "todo") {
           return true;
         } else if (selectedStatus.value === "in progress") {
-          return !todo.done && !isOverdue(todo.deadline);
+          return !todo.completed && !isOverdue(todo.deadline);
         } else if (selectedStatus.value === "done") {
-          return todo.done;
+          return todo.completed;
         } else if (
           selectedStatus.value === "low priority" &&
           todo.priority === "Low"
@@ -148,19 +111,16 @@ const Todo = () => {
       })
     : todos;
 
-  const handleSubmit = () => {
-    addTodo();
-  };
-
   const handlePriorityChange = (selectedPriority) => {
     setSelectedPriority(selectedPriority);
   };
 
-  useEffect(() => {
-    setTodos((prev) => {
-      prev.sort((a, b) => {
+  const handleFetchTodos = async () => {
+    const fetchedTodos = await getAllTodos();
+    setTodos(() => {
+      fetchedTodos.sort((a, b) => {
         if (
-          a.done === b.done &&
+          a.completed === b.completed &&
           isOverdue(a.deadline) === isOverdue(b.deadline)
         ) {
           const priorityOrder = { Low: 2, Normal: 1, High: 0 };
@@ -170,9 +130,13 @@ const Todo = () => {
         return isOverdue(a.deadline) ? -1 : 1;
       });
 
-      return prev;
+      return fetchedTodos;
     });
-  }, [addTodo, toggleDone]);
+  };
+
+  useEffect(() => {
+    handleFetchTodos();
+  }, []);
 
   const statuses = [
     {
@@ -322,8 +286,20 @@ const Todo = () => {
                     type="submit"
                     className=""
                     onClick={() => {
-                      handleSubmit();
-                      toast.success("Task successfully created!");
+                      toast.promise(
+                        addTodo({
+                          title: todoInput,
+                          completed: false,
+                          deadline: date,
+                          priority,
+                        }),
+                        "Task successfully created!"
+                      );
+                      setTodoInput("");
+                      setDate(null);
+                      setPriority("Normal");
+                      setOpen(false);
+                      handleFetchTodos();
                     }}
                   >
                     Create Task
@@ -417,8 +393,8 @@ const Todo = () => {
                     })
                     .map((todo, index) => (
                       <TableRow
-                        key={index}
-                        className={`${index % 2 === 0 ? "bg-gray-100" : ""} ${
+                        key={todo.id}
+                        className={`${todo.id % 2 === 0 ? "bg-gray-100" : ""} ${
                           isOverdue(todo.deadline)
                             ? "text-red-500 font-bold"
                             : ""
@@ -426,23 +402,31 @@ const Todo = () => {
                       >
                         <TableCell className="mx-auto">
                           <Checkbox
-                            id={`task-${index}`}
-                            checked={todo.done}
+                            id={`task-${todo.id}`}
+                            checked={todo.completed}
                             onCheckedChange={() => {
-                              toggleDone(index);
+                              toggleDone(todo.id);
                             }}
                           />
                         </TableCell>
-                        <TableCell className={`${todo.done && "line-through"}`}>
+                        <TableCell
+                          className={`${todo.completed && "line-through"}`}
+                        >
                           {index + 1}
                         </TableCell>
-                        <TableCell className={`${todo.done && "line-through"}`}>
-                          {todo.text}
+                        <TableCell
+                          className={`${todo.completed && "line-through"}`}
+                        >
+                          {todo.title}
                         </TableCell>
-                        <TableCell className={`${todo.done && "line-through"}`}>
+                        <TableCell
+                          className={`${todo.completed && "line-through"}`}
+                        >
                           {todo.priority}
                         </TableCell>
-                        <TableCell className={`${todo.done && "line-through"}`}>
+                        <TableCell
+                          className={`${todo.completed && "line-through"}`}
+                        >
                           {todo?.deadline
                             ? format(new Date(todo.deadline), "dd/MM/yyyy")
                             : ""}
@@ -450,12 +434,17 @@ const Todo = () => {
                             {getTimeRemaining(todo.deadline)}
                           </div>
                         </TableCell>
-                        <TableCell>{todo.done ? "Done" : "Pending"}</TableCell>
+                        <TableCell>
+                          {todo.completed ? "Done" : "Pending"}
+                        </TableCell>
                         <TableCell className="float-right">
                           <Button
                             onClick={() => {
-                              removeTodo(index);
-                              toast.success("Task removed successfully!");
+                              toast.promise(
+                                deleteTodo(todo.id),
+                                handleFetchTodos(),
+                                "Task removed successfully!"
+                              );
                             }}
                             variant="ghost"
                             className="ml-2"
