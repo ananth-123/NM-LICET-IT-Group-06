@@ -194,8 +194,8 @@ const Todo = () => {
           </div>
         </nav>
         <Separator className="" />
+        <Toaster />
         <div className="container mx-auto p-6">
-          <Toaster />
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline">
@@ -288,10 +288,14 @@ const Todo = () => {
                           deadline: date,
                           priority,
                         });
-                        toast.promise(
-                          Promise.resolve(handleFetchTodos()),
-                          "Task successfully created!"
-                        );
+                        const promise = Promise.resolve(handleFetchTodos());
+                        toast.promise(promise, {
+                          loading: "Loading...",
+                          success: () => {
+                            return `Task successfully created!`;
+                          },
+                          error: "Error",
+                        });
                         setTodoInput("");
                         setDate(null);
                         setPriority("Normal");
@@ -404,11 +408,16 @@ const Todo = () => {
                             id={`task-${todo.id}`}
                             checked={todo.completed}
                             onCheckedChange={() => {
-                              // toggleDone(todo.id);
-                              toast.promise(
-                                updateTodo(todo.id, !todo.completed),
-                                "Task updated successfully!"
+                              const promise = Promise.resolve(
+                                updateTodo(todo.id, !todo.completed)
                               );
+                              toast.promise(promise, {
+                                loading: "Loading...",
+                                success: () => {
+                                  return `Great job on completing the task!!!`;
+                                },
+                                error: "Error",
+                              });
                               handleFetchTodos();
                             }}
                           />
@@ -446,10 +455,16 @@ const Todo = () => {
                             onClick={async () => {
                               try {
                                 await deleteTodo(todo.id);
-                                toast.promise(
-                                  handleFetchTodos(),
-                                  "Task removed successfully!"
+                                const promise = Promise.resolve(
+                                  handleFetchTodos()
                                 );
+                                toast.promise(promise, {
+                                  loading: "Loading...",
+                                  success: () => {
+                                    return `Task removed!`;
+                                  },
+                                  error: "Error",
+                                });
                               } catch (error) {
                                 console.error("Error deleting todo:", error);
                               }
