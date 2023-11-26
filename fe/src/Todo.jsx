@@ -106,24 +106,28 @@ const Todo = () => {
     setSelectedPriority(selectedPriority);
   };
 
-  const handleFetchTodos = async () => {
-    const fetchedTodos = await getAllTodos();
-    setTodos(() => {
-      fetchedTodos.sort((a, b) => {
-        if (
-          a.completed === b.completed &&
-          isOverdue(a.deadline) === isOverdue(b.deadline)
-        ) {
-          const priorityOrder = { Low: 2, Normal: 1, High: 0 };
-          return priorityOrder[a.priority] - priorityOrder[b.priority];
-        }
+  const handleFetchTodos = useCallback(async () => {
+    try {
+      const fetchedTodos = await getAllTodos();
+      setTodos(() => {
+        fetchedTodos.sort((a, b) => {
+          if (
+            a.completed === b.completed &&
+            isOverdue(a.deadline) === isOverdue(b.deadline)
+          ) {
+            const priorityOrder = { Low: 2, Normal: 1, High: 0 };
+            return priorityOrder[a.priority] - priorityOrder[b.priority];
+          }
 
-        return isOverdue(a.deadline) ? -1 : 1;
+          return isOverdue(a.deadline) ? -1 : 1;
+        });
+
+        return fetchedTodos;
       });
-
-      return fetchedTodos;
-    });
-  };
+    } catch (error) {
+      console.error("Error fetching todos:", error);
+    }
+  }, []);
 
   useEffect(() => {
     handleFetchTodos();
@@ -276,21 +280,25 @@ const Todo = () => {
                   <Button
                     type="submit"
                     className=""
-                    onClick={() => {
-                      toast.promise(
-                        addTodo({
+                    onClick={async () => {
+                      try {
+                        await addTodo({
                           title: todoInput,
                           completed: false,
                           deadline: date,
                           priority,
-                        }),
-                        "Task successfully created!"
-                      );
-                      setTodoInput("");
-                      setDate(null);
-                      setPriority("Normal");
-                      setOpen(false);
-                      handleFetchTodos();
+                        });
+                        toast.promise(
+                          Promise.resolve(handleFetchTodos()),
+                          "Task successfully created!"
+                        );
+                        setTodoInput("");
+                        setDate(null);
+                        setPriority("Normal");
+                        setOpen(false);
+                      } catch (error) {
+                        console.error("Error adding todo:", error);
+                      }
                     }}
                   >
                     Create Task
@@ -400,9 +408,9 @@ const Todo = () => {
                               toast.promise(
                                 updateTodo(todo.id, !todo.completed),
                                 "Task updated successfully!"
-                                );
-                                handleFetchTodos();
-                              }}
+                              );
+                              handleFetchTodos();
+                            }}
                           />
                         </TableCell>
                         <TableCell
