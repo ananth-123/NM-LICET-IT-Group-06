@@ -14,7 +14,7 @@ import {
   Check,
   Filter,
 } from "lucide-react";
-import { getAllTodos, addTodo, deleteTodo } from "./lib/utils";
+import { getAllTodos, addTodo, updateTodo, deleteTodo } from "./lib/utils";
 import {
   Command,
   CommandEmpty,
@@ -69,15 +69,6 @@ const Todo = () => {
   const [open, setOpen] = React.useState(false);
   const [selectedStatus, setSelectedStatus] = React.useState(null);
   const [selectedPriority, setSelectedPriority] = useState(null);
-
-  const toggleDone = useCallback((id) => {
-    setTodos((prev) => {
-      const index = prev.findIndex((todo) => todo.id === id);
-      const updatedTodos = [...prev];
-      updatedTodos[index].completed = !updatedTodos[index].completed;
-      return [...prev];
-    });
-  }, []);
 
   const isOverdue = (deadline) => {
     return deadline && new Date(deadline) < new Date();
@@ -405,8 +396,13 @@ const Todo = () => {
                             id={`task-${todo.id}`}
                             checked={todo.completed}
                             onCheckedChange={() => {
-                              toggleDone(todo.id);
-                            }}
+                              // toggleDone(todo.id);
+                              toast.promise(
+                                updateTodo(todo.id, !todo.completed),
+                                "Task updated successfully!"
+                                );
+                                handleFetchTodos();
+                              }}
                           />
                         </TableCell>
                         <TableCell

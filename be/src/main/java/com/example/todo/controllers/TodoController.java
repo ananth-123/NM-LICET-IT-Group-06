@@ -8,7 +8,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -50,11 +49,10 @@ public class TodoController {
 
     @PutMapping(value = "/todos/{id}")
     public ResponseEntity<Todo> updateTodo(@PathVariable("id") String id,
-            @Valid @RequestBody Todo todo) {
+            @Valid @RequestBody boolean completed) {
         return todoRepository.findById(id)
                 .map(todoData -> {
-                    todoData.setTitle(todo.getTitle());
-                    todoData.setCompleted(todo.getCompleted());
+                    todoData.setCompleted(completed);
                     Todo updatedTodo = todoRepository.save(todoData);
                     return ResponseEntity.ok().body(updatedTodo);
                 }).orElse(ResponseEntity.notFound().build());

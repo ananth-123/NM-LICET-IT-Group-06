@@ -20,6 +20,15 @@ const addTodo = async (todo) => {
   return response;
 };
 
+const updateTodo = async (id, completed) => {
+  const response = await ky
+    .put(`${process.env.REACT_APP_DATABASE_URL}/todos/${id}`, {
+      json: completed,
+    })
+    .json();
+  return response;
+}
+
 const deleteTodo = async (id) => {
   const response = await ky.delete(
     `${process.env.REACT_APP_DATABASE_URL}/todos/${id}`
@@ -27,4 +36,4 @@ const deleteTodo = async (id) => {
   return response;
 };
 
-export { getAllTodos, addTodo, deleteTodo };
+export { getAllTodos, addTodo, updateTodo, deleteTodo };
