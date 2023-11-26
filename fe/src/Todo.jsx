@@ -103,7 +103,7 @@ const Todo = () => {
     : todos;
 
   const handlePriorityChange = (selectedPriority) => {
-    setSelectedPriority(selectedPriority);
+    setPriority(selectedPriority);
   };
 
   const handleFetchTodos = useCallback(async () => {
@@ -443,12 +443,16 @@ const Todo = () => {
                         </TableCell>
                         <TableCell className="float-right">
                           <Button
-                            onClick={() => {
-                              toast.promise(
-                                deleteTodo(todo.id),
-                                handleFetchTodos(),
-                                "Task removed successfully!"
-                              );
+                            onClick={async () => {
+                              try {
+                                await deleteTodo(todo.id);
+                                toast.promise(
+                                  handleFetchTodos(),
+                                  "Task removed successfully!"
+                                );
+                              } catch (error) {
+                                console.error("Error deleting todo:", error);
+                              }
                             }}
                             variant="ghost"
                             className="ml-2"

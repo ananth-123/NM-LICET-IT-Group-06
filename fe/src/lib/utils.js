@@ -27,12 +27,16 @@ const updateTodo = async (id, completed) => {
     })
     .json();
   return response;
-}
+};
 
 const deleteTodo = async (id) => {
   const response = await ky.delete(
     `${process.env.REACT_APP_DATABASE_URL}/todos/${id}`
   );
+  if (!response.ok) {
+    // If the response status is not in the 2xx range, throw an error
+    throw new Error(`Failed to delete todo. Status: ${response.status}`);
+  }
   return response;
 };
 
