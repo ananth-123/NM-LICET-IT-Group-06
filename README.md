@@ -4,8 +4,6 @@ This Todo App is a simple web application for managing your tasks. It features a
 
 ## Hosted Links:
 
-### Frontend Link:
-
 https://nm-licet-it-group-06.vercel.app
 
 ## Features
