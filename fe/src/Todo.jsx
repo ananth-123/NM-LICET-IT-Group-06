@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Check,
   Filter,
+  CheckCircle,
 } from "lucide-react";
 import { getAllTodos, addTodo, updateTodo, deleteTodo } from "./lib/utils";
 import {
@@ -49,6 +50,14 @@ import {
   DialogTrigger,
   DialogClose,
 } from "./components/Dialog";
+import {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardContent,
+} from "./components/Card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/Tabs";
 import {
   Table,
   TableHeader,
@@ -189,13 +198,84 @@ const Todo = () => {
     <>
       <div className=" min-h-screen bg-white">
         <nav className=" p-4">
-          <div className="container mx-auto">
-            <h1 className="text-2xl font-bold">Todo List</h1>
+          <div className="flex container items-center justify-between mx-auto">
+            <div className="flex items-center gap-2">
+              <CheckCircle />
+              <h1 className=" text-3xl font-semibold">Todo List</h1>
+            </div>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button>Sign In</Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <div className="grid gap-4 py-4">
+                  <Tabs defaultValue="login" className="max-sm:w-[80vw] w-auto">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="login">Log In</TabsTrigger>
+                      <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="login">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Login</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          <div className="space-y-1">
+                            <Label htmlFor="name">Email ID</Label>
+                            <Input id="email" placeholder="example@mail.com" />
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="new">Password</Label>
+                            <Input
+                              id="new"
+                              type="password"
+                              placeholder="Password"
+                              required
+                            />
+                          </div>
+                        </CardContent>
+                        <CardFooter>
+                          <Button>Login</Button>
+                        </CardFooter>
+                      </Card>
+                    </TabsContent>
+                    <TabsContent value="signup">
+                      <Card className="">
+                        <CardHeader>
+                          <CardTitle className="">Sign Up</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          <div className="space-y-1">
+                            <Label htmlFor="current">Email ID</Label>
+                            <Input
+                              id="email"
+                              type="email"
+                              placeholder="example@mail.com"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="new">Password</Label>
+                            <Input
+                              id="new"
+                              type="password"
+                              placeholder="Password"
+                            />
+                          </div>
+                        </CardContent>
+                        <CardFooter>
+                          <Button>Sign Up</Button>
+                        </CardFooter>
+                      </Card>
+                    </TabsContent>
+                  </Tabs>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </nav>
         <Separator className="" />
         <Toaster />
-        <div className="container mx-auto p-6">
+        <div className="h-[85vh] container mx-auto p-6 w-[95%]">
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline">
@@ -359,7 +439,7 @@ const Todo = () => {
             </PopoverContent>
           </Popover>
           {filteredTasks.length === 0 && (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center h-[70vh]">
               <p className="text-xl text-gray-500">No tasks</p>
             </div>
           )}
@@ -482,6 +562,29 @@ const Todo = () => {
             </div>
           )}
         </div>
+      </div>
+      <div className="relative">
+        <footer className="absolute bottom-0 w-full ">
+          <Separator className="" />
+          <div className="container flex flex-col items-center justify-between gap-4 md:h-20 md:flex-row">
+            <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
+              Built by{" "}
+              <Label className="font-medium underline underline-offset-4">
+                Group 06
+              </Label>
+              . The source code is available on{" "}
+              <a
+                href="https://github.com/ananth-123/NM-LICET-IT-Group-06"
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-blue-700 underline underline-offset-4"
+              >
+                GitHub
+              </a>
+              .
+            </p>
+          </div>
+        </footer>
       </div>
     </>
   );
